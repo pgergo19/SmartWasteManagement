@@ -381,10 +381,12 @@ public class Main {
             System.out.println(
                     "ID: " + bin.getId() +
                             " | Cím: " + bin.getAddress() +
+                            " | Típus: " + bin.getType() +
+                            " | Kuka kapacitása: " + bin.getCapacity() + " liter" +
+                            " | Aktuális hulladék: " + bin.getFillLevel() + " liter" +
                             " | Telítettség: " + bin.getFillPercentage() + "%"
             );
         }
-
 
         int binId = readInt("Add meg a begyűjtendő kuka ID-ját: ");
 
