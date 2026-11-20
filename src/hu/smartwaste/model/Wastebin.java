@@ -1,7 +1,8 @@
 package hu.smartwaste.model;
+import java.io.Serializable;
 
-public abstract class Wastebin {
-
+public abstract class Wastebin implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int id;
     private String address;
     private int capacity;

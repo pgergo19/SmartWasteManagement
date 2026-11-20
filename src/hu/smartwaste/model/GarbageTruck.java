@@ -1,14 +1,15 @@
 
 package hu.smartwaste.model;
+import java.io.Serializable;
 
-public class GarbageTruck {
+public class GarbageTruck implements Serializable{
 
     public enum CollectionResult {
         SUCCESS,
         NEEDS_CONFIRMATION,
         OVER_CAPACITY
     }
-
+    private static final long serialVersionUID = 1L;
     private int id;
     private String licensePlate;
     private int maxCapacity;
