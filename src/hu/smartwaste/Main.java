@@ -8,8 +8,10 @@ import hu.smartwaste.model.InvalidBinException;
 import hu.smartwaste.service.WasteManagement;
 import hu.smartwaste.model.GarbageTruck;
 import hu.smartwaste.service.TruckManagement;
+import hu.smartwaste.service.FillLevelStrategy;
+import hu.smartwaste.service.AddressStrategy;
 
-import java.sql.SQLOutput;
+
 import java.util.Scanner;
 
 public class Main {
@@ -34,6 +36,7 @@ public class Main {
             System.out.println("8. Kukásautók listázása");
             System.out.println("9. Kukásautó törlése");
             System.out.println("10. Hulladékbegyűjtés");
+            System.out.println("11. Kukák rendezése");
             System.out.println("0. Kilépés");
         do {
             System.out.print("Választás: ");
@@ -153,7 +156,7 @@ public class Main {
 
 
                 case 2:
-
+                    System.out.println("--- Kukák listázása ---");
                     findBin();
                     System.out.println("--- Kérem a következő utasítást ---");
                     break;
@@ -199,6 +202,7 @@ public class Main {
                     System.out.println("8. Kukásautók listázása");
                     System.out.println("9. Kukásautó törlése");
                     System.out.println("10. Hulladékbegyűjtés");
+                    System.out.println("11. Kukák rendezése");
                     System.out.println("--- Kérem a következő utasítást ---");
 
                     break;
@@ -256,6 +260,11 @@ public class Main {
 
                 case 10:
                     collectWaste();
+                    System.out.println("--- Kérem a következő utasítást ---");
+                    break;
+
+                case 11:
+                    sortBins();
                     System.out.println("--- Kérem a következő utasítást ---");
                     break;
 
@@ -490,6 +499,29 @@ public class Main {
                             + " | Telítettség: "
                             + bin.getFillPercentage() + "%"
             );
+        }
+    }
+    private static void sortBins() {
+
+        System.out.println("\n--- Kukák rendezése ---");
+        System.out.println("1. Telítettség szerint");
+        System.out.println("2. Cím szerint");
+
+        int choice = readInt("Választás: ");
+
+        switch (choice) {
+            case 1:
+                management.sortBins(new FillLevelStrategy());
+                System.out.println("Kukák rendezve telítettség szerint!");
+                break;
+
+            case 2:
+                management.sortBins(new AddressStrategy());
+                System.out.println("Kukák rendezve cím szerint!");
+                break;
+
+            default:
+                System.out.println("Érvénytelen választás!");
         }
     }
 }
