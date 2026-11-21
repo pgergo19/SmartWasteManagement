@@ -10,6 +10,8 @@ import hu.smartwaste.model.GarbageTruck;
 import hu.smartwaste.service.TruckManagement;
 import hu.smartwaste.service.FillLevelStrategy;
 import hu.smartwaste.service.AddressStrategy;
+import hu.smartwaste.model.ApplicationData;
+import hu.smartwaste.service.DataStorage;
 
 
 import java.util.Scanner;
@@ -18,7 +20,7 @@ public class Main {
     private static final Scanner scanner = new Scanner(System.in);
     private static final TruckManagement truckManagement = new TruckManagement();
     private static final WasteManagement management = new WasteManagement();
-
+    private static final DataStorage dataStorage = new DataStorage();
 
     public static void main(String[] args) {
 
@@ -38,6 +40,22 @@ public class Main {
             System.out.println("10. Hulladékbegyűjtés");
             System.out.println("11. Kukák rendezése");
             System.out.println("0. Kilépés");
+
+        ApplicationData savedData = dataStorage.loadData();
+
+        for (Wastebin bin : savedData.getBins()) {
+            management.addBin(bin);
+        }
+
+        for (GarbageTruck truck : savedData.getTrucks()) {
+            truckManagement.addTruck(truck);
+        }
+
+        if (!savedData.getBins().isEmpty() || !savedData.getTrucks().isEmpty()) {
+            System.out.println("Korábban mentett adatok sikeresen betöltve!");
+        } else {
+            System.out.println("Nem található korábbi mentett adat.");
+        }
         do {
             System.out.print("Választás: ");
 
@@ -269,9 +287,12 @@ public class Main {
                     break;
 
                 case 0:
-                    System.out.println("Viszlát!");
-                    break;
 
+                    dataStorage.saveData(management, truckManagement);
+                    System.out.println("Viszontlátásra!");
+
+
+                    break;
                 default:
                     System.out.println("Érvénytelen menüpont!");
                     System.out.println("--- Kérem a következő utasítást ---");
