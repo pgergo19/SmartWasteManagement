@@ -39,6 +39,7 @@ public class Main {
             System.out.println("9. Kukásautó törlése");
             System.out.println("10. Hulladékbegyűjtés");
             System.out.println("11. Kukák rendezése");
+            System.out.println("12. Teherautó ürítése");
             System.out.println("0. Kilépés");
 
         ApplicationData savedData = dataStorage.loadData();
@@ -221,6 +222,7 @@ public class Main {
                     System.out.println("9. Kukásautó törlése");
                     System.out.println("10. Hulladékbegyűjtés");
                     System.out.println("11. Kukák rendezése");
+                    System.out.println("12. Teherautó ürítése");
                     System.out.println("--- Kérem a következő utasítást ---");
 
                     break;
@@ -285,7 +287,10 @@ public class Main {
                     sortBins();
                     System.out.println("--- Kérem a következő utasítást ---");
                     break;
-
+                case 12:
+                    emptyTruck();
+                    System.out.println("--- Kérem a következő utasítást ---");
+                    break;
                 case 0:
 
                     dataStorage.saveData(management, truckManagement);
@@ -544,6 +549,20 @@ public class Main {
             default:
                 System.out.println("Érvénytelen választás!");
         }
+
+    }
+    private static void emptyTruck() {
+
+        int id = readInt("Add meg a kukásautó ID-ját: ");
+
+        GarbageTruck truck = truckManagement.findTruck(id);
+
+        if (truck == null) {
+            System.out.println("Nem található ilyen azonosítójú kukásautó!");
+            return;
+        }
+
+        truck.emptyTruck();
     }
 }
 

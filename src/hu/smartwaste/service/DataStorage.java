@@ -1,15 +1,24 @@
+
 package hu.smartwaste.service;
 
 import hu.smartwaste.model.ApplicationData;
-import hu.smartwaste.model.Wastebin;
-import hu.smartwaste.model.GarbageTruck;
 
 import java.io.*;
 import java.util.ArrayList;
 
 public class DataStorage {
 
-    private static final String FILE_NAME = "data.dat";
+    private final String fileName;
+
+    // Alapértelmezett konstruktor a főprogramnak
+    public DataStorage() {
+        this("data.dat");
+    }
+
+    // Teszteléshez használható konstruktor
+    public DataStorage(String fileName) {
+        this.fileName = fileName;
+    }
 
     public void saveData(WasteManagement wasteManagement,
                          TruckManagement truckManagement) {
@@ -20,7 +29,7 @@ public class DataStorage {
         );
 
         try (ObjectOutputStream output =
-                     new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
+                     new ObjectOutputStream(new FileOutputStream(fileName))) {
 
             output.writeObject(data);
             System.out.println("Adatok sikeresen elmentve!");
@@ -32,14 +41,14 @@ public class DataStorage {
 
     public ApplicationData loadData() {
 
-        File file = new File(FILE_NAME);
+        File file = new File(fileName);
 
         if (!file.exists()) {
             return new ApplicationData(new ArrayList<>(), new ArrayList<>());
         }
 
         try (ObjectInputStream input =
-                     new ObjectInputStream(new FileInputStream(FILE_NAME))) {
+                     new ObjectInputStream(new FileInputStream(fileName))) {
 
             return (ApplicationData) input.readObject();
 

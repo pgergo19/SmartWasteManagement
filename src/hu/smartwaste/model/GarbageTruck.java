@@ -60,9 +60,7 @@ public class GarbageTruck implements Serializable{
         return currentLoad >= maxCapacity;
     }
 
-    public void emptyTruck() {
-        currentLoad = 0;
-    }
+
 
     public CollectionResult collectBin(Wastebin bin, boolean confirmed) {
         if (bin == null) {
@@ -87,5 +85,14 @@ public class GarbageTruck implements Serializable{
         bin.empty();
 
         return CollectionResult.SUCCESS;
+    }
+    public void emptyTruck() {
+        if (currentLoad == 0) {
+            System.out.println("A teherautó már üres!");
+            return;
+        }
+
+        currentLoad = 0;
+        System.out.println("A teherautó sikeresen kiürítve!");
     }
 }
