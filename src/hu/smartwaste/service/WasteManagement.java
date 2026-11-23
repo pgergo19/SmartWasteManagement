@@ -59,4 +59,7 @@ public class WasteManagement {
                 Wastebin::getFillPercentage
         ).reversed());
     }
+    public void sortBins(BinSortingStrategy strategy) {
+        strategy.sort(bins);
+    }
 }

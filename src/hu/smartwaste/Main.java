@@ -8,19 +8,21 @@ import hu.smartwaste.model.InvalidBinException;
 import hu.smartwaste.service.WasteManagement;
 import hu.smartwaste.model.GarbageTruck;
 import hu.smartwaste.service.TruckManagement;
+import hu.smartwaste.service.FillLevelStrategy;
+import hu.smartwaste.service.AddressStrategy;
+import hu.smartwaste.model.ApplicationData;
+import hu.smartwaste.service.DataStorage;
 
-import java.sql.SQLOutput;
+
 import java.util.Scanner;
 
 public class Main {
     private static final Scanner scanner = new Scanner(System.in);
     private static final TruckManagement truckManagement = new TruckManagement();
-
+    private static final WasteManagement management = new WasteManagement();
+    private static final DataStorage dataStorage = new DataStorage();
 
     public static void main(String[] args) {
-
-
-        WasteManagement management = new WasteManagement();
 
         int choice;
 
@@ -35,7 +37,26 @@ public class Main {
             System.out.println("7. Egyedi kukásautó létrehozása");
             System.out.println("8. Kukásautók listázása");
             System.out.println("9. Kukásautó törlése");
+            System.out.println("10. Hulladékbegyűjtés");
+            System.out.println("11. Kukák rendezése");
+            System.out.println("12. Teherautó ürítése");
             System.out.println("0. Kilépés");
+
+        ApplicationData savedData = dataStorage.loadData();
+
+        for (Wastebin bin : savedData.getBins()) {
+            management.addBin(bin);
+        }
+
+        for (GarbageTruck truck : savedData.getTrucks()) {
+            truckManagement.addTruck(truck);
+        }
+
+        if (!savedData.getBins().isEmpty() || !savedData.getTrucks().isEmpty()) {
+            System.out.println("Korábban mentett adatok sikeresen betöltve!");
+        } else {
+            System.out.println("Nem található korábbi mentett adat.");
+        }
         do {
             System.out.print("Választás: ");
 
@@ -49,27 +70,28 @@ public class Main {
 
                         System.out.println("\n--- Kuka hozzáadása ---");
 
-                        System.out.print("Kuka azonosítója: ");
-                        int id = scanner.nextInt();
-                        scanner.nextLine();
-                        if (id <= 0) {
-                            throw new InvalidBinException("Az azonosítónak pozitívnak kell lennie!");
+
+                        int id;
+
+                        while (true) {
+                            id = readInt("Kuka ID: ");
+
+                            if (management.findBin(id) != null) {
+                                System.out.println("Ez az ID már használatban van! Adj meg másikat!");
+                            } else {
+                                break;
+                            }
                         }
+
+
 
                         System.out.print("Kuka címe: ");
                         String address = scanner.nextLine();
-                        if (address == null || address.isBlank()) {
-                            throw new InvalidBinException("A cím nem lehet üres!");
-                        }
 
-                        System.out.print("Kuka kapacitása (liter): ");
-                        int capacity = scanner.nextInt();
-                        if (capacity <= 0) {
-                            throw new InvalidBinException(
-                                    "A kapacitásnak pozitívnak kell lennie!"
-                            );
 
-                        }
+
+                        int capacity = readInt("Kuk a kapacitása (liter): ");
+
 
                         System.out.print("Jelenlegi telítettség (liter): ");
                         int fillLevel = scanner.nextInt();
@@ -153,22 +175,14 @@ public class Main {
 
 
                 case 2:
-
-                        for (Wastebin bin : management.getAllBins()) {
-                            System.out.println(
-                                    "ID: " + bin.getId()
-                                        + " | Cím: " + bin.getAddress()
-                                        + " | Típus: " + bin.getType()
-                                        + " | Telítettség: "
-                                        + bin.getFillPercentage() + "%"
-                        );
-                    }
+                    System.out.println("--- Kukák listázása ---");
+                    findBin();
                     System.out.println("--- Kérem a következő utasítást ---");
                     break;
 
                 case 3:
-                    System.out.print("Törlendő kuka ID-ja: ");
-                    int kid = scanner.nextInt();
+
+                    int kid = readInt("Törlendő kuka ID-ja: ");
 
                     if (management.removeBin(kid)) {
                         System.out.println("A kuka sikeresen törölve!");
@@ -206,6 +220,9 @@ public class Main {
                     System.out.println("7. Egyedi kukásautó létrehozása");
                     System.out.println("8. Kukásautók listázása");
                     System.out.println("9. Kukásautó törlése");
+                    System.out.println("10. Hulladékbegyűjtés");
+                    System.out.println("11. Kukák rendezése");
+                    System.out.println("12. Teherautó ürítése");
                     System.out.println("--- Kérem a következő utasítást ---");
 
                     break;
@@ -229,12 +246,10 @@ public class Main {
 
                 case 9:
                     System.out.println("Kukásautó törlése:");
-                    System.out.println("1. Törlés ID alapján");
-                    System.out.println("2. Törlés rendszám alapján");
-                    System.out.print("Választás: ");
 
-                    int deleteChoice = scanner.nextInt();
-                    scanner.nextLine();
+
+                    int deleteChoice = readInt("1. Törlés ID alapján\n2. Törlés rendszám alapján\nVálasztás: ");
+
 
                     if (deleteChoice == 1) {
                         System.out.print("Add meg a kukásautó ID-ját: ");
@@ -263,10 +278,26 @@ public class Main {
                     System.out.println("--- Kérem a következő utasítást ---");
                     break;
 
-                case 0:
-                    System.out.println("Viszlát!");
+                case 10:
+                    collectWaste();
+                    System.out.println("--- Kérem a következő utasítást ---");
                     break;
 
+                case 11:
+                    sortBins();
+                    System.out.println("--- Kérem a következő utasítást ---");
+                    break;
+                case 12:
+                    emptyTruck();
+                    System.out.println("--- Kérem a következő utasítást ---");
+                    break;
+                case 0:
+
+                    dataStorage.saveData(management, truckManagement);
+                    System.out.println("Viszontlátásra!");
+
+
+                    break;
                 default:
                     System.out.println("Érvénytelen menüpont!");
                     System.out.println("--- Kérem a következő utasítást ---");
@@ -292,16 +323,25 @@ public class Main {
 
     private static void createCustomTruck() {
 
-        System.out.print("Kukásautó ID: ");
-        int id = scanner.nextInt();
-        scanner.nextLine();
+
+        int id;
+
+        while (true) {
+            id = readInt("Kukásautó ID: ");
+
+            if (truckManagement.findTruck(id) != null) {
+                System.out.println("Ez az ID már használatban van! Adj meg másikat!");
+            } else {
+                break;
+            }
+        }
 
         System.out.print("Rendszám: ");
         String licensePlate = scanner.nextLine();
 
-        System.out.print("Maximális kapacitás (liter): ");
-        int maxCapacity = scanner.nextInt();
-        scanner.nextLine();
+
+        int maxCapacity = readInt("Maximális kapacitás (liter): ");
+
 
         try {
             GarbageTruck truck = new GarbageTruck(id, licensePlate, maxCapacity);
@@ -341,4 +381,188 @@ public class Main {
             System.out.println("Nem található ilyen ID-jú kukásautó.");
         }
     }
+
+    private static void collectWaste() {
+
+        if (truckManagement.getAllTrucks().isEmpty()) {
+            System.out.println("Nincsenek regisztrált kukásautók!");
+            return;
+        }
+
+        if (management.getBinsToCollect().isEmpty()) {
+            System.out.println("Jelenleg nincs gyűjtésre váró kuka!");
+            return;
+        }
+
+        System.out.println("\n--- Hulladékbegyűjtés ---");
+
+        System.out.println("Elérhető kukásautók:");
+        listTrucks();
+
+
+        int truckId = readInt("Add meg a kukásautó ID-ját: ");
+
+
+        GarbageTruck truck = truckManagement.findTruck(truckId);
+
+        if (truck == null) {
+            System.out.println("Nem található ilyen kukásautó!");
+            return;
+        }
+
+        System.out.println("\nGyűjtésre váró kukák:");
+
+        for (Wastebin bin : management.getBinsToCollect()) {
+            System.out.println(
+                    "ID: " + bin.getId() +
+                            " | Cím: " + bin.getAddress() +
+                            " | Típus: " + bin.getType() +
+                            " | Kuka kapacitása: " + bin.getCapacity() + " liter" +
+                            " | Aktuális hulladék: " + bin.getFillLevel() + " liter" +
+                            " | Telítettség: " + bin.getFillPercentage() + "%"
+            );
+        }
+
+        int binId = readInt("Add meg a begyűjtendő kuka ID-ját: ");
+
+
+        Wastebin bin = management.findBin(binId);
+
+        if (bin == null || bin.getFillPercentage() < 70) {
+            System.out.println("A kuka nem található, vagy még nem gyűjthető!");
+            return;
+        }
+
+        int oldLoad = truck.getCurrentLoad();
+
+        GarbageTruck.CollectionResult result =
+                truck.collectBin(bin, false);
+
+        if (result == GarbageTruck.CollectionResult.NEEDS_CONFIRMATION) {
+
+            System.out.println(
+                    "Figyelem! A begyűjtés túllépné a névleges kapacitást."
+            );
+            System.out.print("Biztosan folytatod? (I/N): ");
+
+            String answer = scanner.nextLine();
+
+            if (!answer.equalsIgnoreCase("I")) {
+                System.out.println("A begyűjtés megszakítva.");
+                return;
+            }
+
+            result = truck.collectBin(bin, true);
+        }
+
+        if (result == GarbageTruck.CollectionResult.OVER_CAPACITY) {
+            System.out.println(
+                    "Hiba! A begyűjtés túllépné a maximális, 110%-os kapacitást!"
+            );
+            return;
+        }
+
+        if (result == GarbageTruck.CollectionResult.SUCCESS) {
+
+            System.out.println("A hulladékbegyűjtés sikeres!");
+
+            double oldPercentage =
+                    (double) oldLoad / truck.getMaxCapacity() * 100;
+
+            double newPercentage = truck.getLoadPercentage();
+
+            if (oldPercentage < 90 && newPercentage >= 90) {
+                System.out.println(
+                        "Figyelem! A kukásautó hamarosan eléri a névleges kapacitását!"
+                );
+            }
+
+            if (oldPercentage < 100 && newPercentage >= 100) {
+                System.out.println(
+                        "A kukásautó elérte a névleges kapacitását!"
+                );
+            }
+
+            if (oldPercentage <= 100 && newPercentage > 100) {
+                System.out.println(
+                        "Figyelem! A kukásautó túllépte a névleges kapacitását!"
+                );
+            }
+
+            System.out.println(
+                    "Jelenlegi terhelés: " +
+                            truck.getCurrentLoad() + " / " +
+                            truck.getMaxCapacity() + " liter"
+            );
+        }
+    }
+    private static int readInt(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine();
+
+            try {
+                int number = Integer.parseInt(input.trim());
+
+                if (number <= 0) {
+                    System.out.println("Hibás bevitel! Pozitív egész számot adj meg!");
+                    continue;
+                }
+
+                return number;
+
+            } catch (NumberFormatException e) {
+                System.out.println("Hibás bevitel! Kérlek, egész számot adj meg!");
+            }
+        }
+    }
+    private static void findBin(){
+        for (Wastebin bin : management.getAllBins()) {
+            System.out.println(
+                    "ID: " + bin.getId()
+                            + " | Cím: " + bin.getAddress()
+                            + " | Típus: " + bin.getType()
+                            + " | Telítettség: "
+                            + bin.getFillPercentage() + "%"
+            );
+        }
+    }
+    private static void sortBins() {
+
+        System.out.println("\n--- Kukák rendezése ---");
+        System.out.println("1. Telítettség szerint");
+        System.out.println("2. Cím szerint");
+
+        int choice = readInt("Választás: ");
+
+        switch (choice) {
+            case 1:
+                management.sortBins(new FillLevelStrategy());
+                System.out.println("Kukák rendezve telítettség szerint!");
+                break;
+
+            case 2:
+                management.sortBins(new AddressStrategy());
+                System.out.println("Kukák rendezve cím szerint!");
+                break;
+
+            default:
+                System.out.println("Érvénytelen választás!");
+        }
+
+    }
+    private static void emptyTruck() {
+
+        int id = readInt("Add meg a kukásautó ID-ját: ");
+
+        GarbageTruck truck = truckManagement.findTruck(id);
+
+        if (truck == null) {
+            System.out.println("Nem található ilyen azonosítójú kukásautó!");
+            return;
+        }
+
+        truck.emptyTruck();
+    }
 }
+

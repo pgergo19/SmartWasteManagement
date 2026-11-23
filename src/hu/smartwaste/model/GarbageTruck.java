@@ -1,9 +1,15 @@
+
 package hu.smartwaste.model;
+import java.io.Serializable;
 
-import hu.smartwaste.service.TruckManagement;
+public class GarbageTruck implements Serializable{
 
-public class GarbageTruck {
-
+    public enum CollectionResult {
+        SUCCESS,
+        NEEDS_CONFIRMATION,
+        OVER_CAPACITY
+    }
+    private static final long serialVersionUID = 1L;
     private int id;
     private String licensePlate;
     private int maxCapacity;
@@ -13,11 +19,11 @@ public class GarbageTruck {
         if (id <= 0) {
             throw new InvalidBinException("Az azonosítónak pozitívnak kell lennie!");
         }
-        if (licensePlate==null || licensePlate.isBlank()) {
+        if (licensePlate == null || licensePlate.isBlank()) {
             throw new InvalidBinException("Nem adott meg rendszámot");
         }
         if (maxCapacity <= 0) {
-            throw new InvalidBinException("Az kapacitásnak pozitívnak kell lennie!");
+            throw new InvalidBinException("A kapacitásnak pozitívnak kell lennie!");
         }
 
         this.id = id;
@@ -42,22 +48,51 @@ public class GarbageTruck {
         return currentLoad;
     }
 
+    public double getLoadPercentage() {
+        return (double) currentLoad / maxCapacity * 100;
+    }
+
     public boolean isFull() {
+        return currentLoad >= (int) (maxCapacity * 1.10);
+    }
+
+    public boolean isNominalCapacityReached() {
         return currentLoad >= maxCapacity;
     }
 
-    public void emptyTruck() {
-        currentLoad = 0;
-    }
-    public boolean collectBin(Wastebin bin) {
 
-        if (currentLoad + bin.getFillLevel() > maxCapacity) {
-            return false;
+
+    public CollectionResult collectBin(Wastebin bin, boolean confirmed) {
+        if (bin == null) {
+            throw new IllegalArgumentException("A kuka nem lehet null!");
         }
 
-        currentLoad += bin.getFillLevel();
+        int newLoad = currentLoad + bin.getFillLevel();
+        int maxAllowedLoad = (int) (maxCapacity * 1.10);
+
+        // A 110%-os határt nem léphetjük túl.
+        if (newLoad > maxAllowedLoad) {
+            return CollectionResult.OVER_CAPACITY;
+        }
+
+        // A névleges kapacitás túllépéséhez megerősítés kell.
+        if (newLoad > maxCapacity && !confirmed) {
+            return CollectionResult.NEEDS_CONFIRMATION;
+        }
+
+        // Sikeres begyűjtés.
+        currentLoad = newLoad;
         bin.empty();
 
-        return true;
+        return CollectionResult.SUCCESS;
+    }
+    public void emptyTruck() {
+        if (currentLoad == 0) {
+            System.out.println("A teherautó már üres!");
+            return;
+        }
+
+        currentLoad = 0;
+        System.out.println("A teherautó sikeresen kiürítve!");
     }
 }
